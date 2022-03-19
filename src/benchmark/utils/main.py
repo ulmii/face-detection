@@ -36,7 +36,7 @@ def load_faces(limit = None):
             face_w = row[5]
             face_h = row[6]
             
-            face = Face(face_id, Box(box_counter, face_x, face_y, face_w, face_h))
+            face = Face(face_id, Box(box_id = box_counter, x1 = face_x, y1 = face_y, w = face_w, h = face_h))
             box_counter += 1
             
             if image_id in image_data_dict:
