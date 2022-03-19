@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+
 class Accuracy:
     def __init__(self, ious, positives, false_positives, negatives):
         self.ious = ious

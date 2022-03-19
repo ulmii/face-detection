@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+
 class Face:
     def __init__(self, face_id, box):
         self.face_id = face_id
