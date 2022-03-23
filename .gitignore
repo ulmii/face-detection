@@ -1,5 +1,6 @@
 # Datasets
-datasets/WIDER/
+wider*/
+!datasets/*
 
 *.bundle.*
 lib/
