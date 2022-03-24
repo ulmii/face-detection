@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+import numpy as np
 from .accuracy import Accuracy
 
 class ImageFaces:
@@ -32,9 +33,9 @@ class ImageFaces:
         
         sorted_boxes_faces = {k: sorted(v, key = lambda val: val[1], reverse=True) for k, v in boxes_faces.items()}
 
-        false_positives = 0
         final_ious = []
-
+        final_boxes = []
+        boxes = []
         for box_id, v in sorted_boxes_faces.items():
             for box_values in v:
                 face_id = box_values[0]
@@ -51,12 +52,12 @@ class ImageFaces:
                     
                     if box_iou > 0.25:
                         final_ious.append(box_iou)
-                    else:
-                        false_positives += 1
+                        final_boxes.append(box_id)
                     break
-                false_positives += 1
 
-        return Accuracy(final_ious, len(final_ious), false_positives, len(self.faces) - len(final_ious))
+            boxes.append(box_id)
+
+        return Accuracy(final_ious, len(final_ious), len(np.setdiff1d(boxes, final_boxes)), len(self.faces) - len(final_ious))
         
     def __str__(self):
         return "({}, {})".format(self.image_id, str(self.faces))
