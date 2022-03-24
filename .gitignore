@@ -1,7 +1,7 @@
 # Datasets
 wider*/
 !datasets/*
-
+*.sqlite
 *.bundle.*
 lib/
 node_modules/

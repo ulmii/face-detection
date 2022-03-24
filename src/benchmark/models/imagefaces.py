@@ -3,10 +3,11 @@
 from .accuracy import Accuracy
 
 class ImageFaces:
-    def __init__(self, image_id, image_path):
+    def __init__(self, image_id, image_path, faces = [], img = None):
         self.image_id = image_id
         self.image_path = image_path
-        self.faces = []
+        self.img = img
+        self.faces = faces
     
     def add_face(self, face):
         if face not in self.faces:
@@ -37,8 +38,11 @@ class ImageFaces:
         for box_id, v in sorted_boxes_faces.items():
             for box_values in v:
                 face_id = box_values[0]
-                box_iou = box_values[1]
+
+                if face_id not in sorted_faces_boxes:
+                    continue
                 
+                box_iou = box_values[1]
                 all_boxes_face = sorted_faces_boxes[face_id]
                 best_box_id_face = all_boxes_face[0][0]
                 
@@ -49,7 +53,7 @@ class ImageFaces:
                         final_ious.append(box_iou)
                     else:
                         false_positives += 1
-                    break;
+                    break
                 false_positives += 1
 
         return Accuracy(final_ious, len(final_ious), false_positives, len(self.faces) - len(final_ious))
