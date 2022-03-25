@@ -1,5 +1,6 @@
 """wider_dataset dataset."""
 
+import os
 import tensorflow_datasets as tfds
 
 class WiderDataset(tfds.object_detection.WiderFace):
@@ -13,7 +14,7 @@ class WiderDataset(tfds.object_detection.WiderFace):
   def _split_generators(self, dl_manager: tfds.download.DownloadManager):
     """Returns SplitGenerators."""
 
-    path = tfds.core.ReadOnlyPath("D:/P/mgr/face-detection-ml/datasets/wider_face")
+    path = tfds.core.ReadOnlyPath(os.getcwd() + "/../datasets/wider_face")
     extracted_dirs = {
       'wider_train': path,
       'wider_val': path,
