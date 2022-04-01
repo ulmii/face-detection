@@ -6,6 +6,11 @@ import sqlite3
 from ..models.face import Face
 from ..models.box import Box
 from ..models.imagefaces import ImageFaces
+from ..tools import *
+from ..models import *
+
+import csv
+from datetime import datetime
 
 images_home = '../../AFLW/images'
 query_string = "SELECT image_id, filepath, Faces.face_id, x, y, w, h FROM FaceImages, Faces, FaceRect WHERE FaceImages.file_id = Faces.file_id AND Faces.face_id = FaceRect.face_id"
@@ -78,3 +83,54 @@ def load_aflw(limit = None):
                 image_data_dict[image_id] = img_face
 
     return image_data_dict.values()
+
+def run_detection(csv_handle, samples, detector, use_width_height = False, display_data = False):
+    for sample in samples:
+        image_faces = tf_to_image_faces(sample)
+        img = image_faces.img
+
+        t1_start = perf_counter_ns()
+        boxes = detector(img)
+        t1_stop = perf_counter_ns()
+
+        boxes_preds = []
+        if boxes is not None:
+            for box in boxes:
+                box = [int(b) for b in box]
+                if use_width_height:
+                    x1 = box[0]
+                    y1 = box[1]
+                    w = box[2]
+                    h = box[3]
+                    
+                    boxes_preds.append(Box(box_id = get_box_id(), x1 = x1, y1 = y1, w = w, h = h))
+
+                    if display_data:
+                        cv2.rectangle(img, (x1, y1), (x1 + w, y1 + h), (255, 0, 0), 7)
+                else:
+                    x1 = box[0]
+                    y1 = box[1]
+                    x2 = box[2]
+                    y2 = box[3]
+                    
+                    boxes_preds.append(Box(box_id = get_box_id(), x1 = x1, y1 = y1, x2 = x2, y2 = y2))
+
+                    if display_data:
+                        cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 7)
+
+        acc = image_faces.calculate_prediction(boxes_preds)
+        pred = Prediction(t1_stop - t1_start, acc)
+
+        if csv_handle:
+            with open(csv_handle.file_path, 'a', newline='\n') as tsvfile:
+                writer = csv.writer(tsvfile, delimiter=str('\t'))
+                writer.writerow([datetime.utcnow().isoformat()] + pred.write())
+           
+        if display_data:
+            for face in image_faces.faces:
+                b = face.box
+                cv2.rectangle(img, (b.x1, b.y1), (b.x2, b.y2), (0, 255, 0), 2)
+
+            print(pred.stats())
+            plt.imshow(img)
+            plt.show()

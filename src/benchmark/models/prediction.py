@@ -6,6 +6,9 @@ class Prediction:
     def stats(self):
         return "Speed: {}ms\n".format(self.speed / 1e+6) + self.accuracy.stats()
     
+    def write(self):
+        return [self.speed] + self.accuracy.write()
+    
     def __str__(self):
         return "(Speed: {}ms, Accuracy: {})".format(self.speed / 1e+6, str(self.accuracy))
     
