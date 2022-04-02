@@ -84,7 +84,7 @@ def load_aflw(limit = None):
 
     return image_data_dict.values()
 
-def run_detection(csv_handle, samples, detector, use_width_height = False, display_data = False):
+def run_detection(tsv_handle, samples, detector, use_width_height = False, display_data = False):
     for sample in samples:
         image_faces = tf_to_image_faces(sample)
         img = image_faces.img
@@ -121,11 +121,11 @@ def run_detection(csv_handle, samples, detector, use_width_height = False, displ
         acc = image_faces.calculate_prediction(boxes_preds)
         pred = Prediction(t1_stop - t1_start, acc)
 
-        if csv_handle:
-            with open(csv_handle.file_path, 'a', newline='\n') as tsvfile:
-                writer = csv.writer(tsvfile, delimiter=str('\t'))
-                writer.writerow([datetime.utcnow().isoformat()] + pred.write())
-           
+        predicted = [b.poly.bounds for b in boxes_preds]
+        ground_truth = [f.box.poly.bounds for f in image_faces.faces]
+
+        tsv_handle.append([datetime.utcnow().isoformat()] + pred.write() + [predicted] + [ground_truth])
+
         if display_data:
             for face in image_faces.faces:
                 b = face.box

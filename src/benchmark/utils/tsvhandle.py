@@ -3,35 +3,52 @@
 import csv
 from datetime import datetime
 from .envmetadata import EnvMetadata
+from .envload import EnvLoad
 from pathlib import Path
 
-class TsvHandle:
+class TsvHandle(object):
     def __init__(self, name):
         self.name = name
 
         Path("./results").mkdir(parents=True, exist_ok=True)
 
         self.env = EnvMetadata()
-        
+        self.load = EnvLoad()
+
         time = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
         
         raw_file = "./results/{}-{}".format(name, time)
-        file_path = "{}.tsv".format(raw_file)
-        metadata_path = "{}-metadata.tsv".format(raw_file)
+        self.file_path = "{}.tsv".format(raw_file)
+        self.metadata_path = "{}-metadata.tsv".format(raw_file)
+        self.env_load_path = "{}-load.tsv".format(raw_file)
         
-        with open(file_path, 'w', newline='\n') as tsvfile:
+        with open(self.file_path, 'w', newline='\n') as tsvfile:
             writer = csv.writer(tsvfile, delimiter=str('\t'))
             writer.writerow(self.get_headers())
         
-        with open(metadata_path, 'w', newline='\n') as tsvfile:
+        with open(self.metadata_path, 'w', newline='\n') as tsvfile:
             writer = csv.writer(tsvfile, delimiter=str('\t'))
             writer.writerow(self.env.get_headers())
-        
-        self.file_path = file_path
-        self.metadata_path = metadata_path
+            writer.writerow(self.env.get_data())
+
+        with open(self.env_load_path, 'w', newline='\n') as tsvfile:
+            writer = csv.writer(tsvfile, delimiter=str('\t'))
+            writer.writerow(self.load.get_headers())
+            writer.writerow(self.load.get_data())
+
+        self.__last_update = datetime.utcnow()
+
+    def __enter__(self):
+        self.file = open(self.file_path, 'a', newline='\n')
+        self.writer = csv.writer(self.file, delimiter=str('\t'))
+
+        self.load_file = open(self.env_load_path, 'a', newline='\n')
+        self.load_writer = csv.writer(self.load_file, delimiter=str('\t'))
+
+        return self
     
     def get_headers(self):
-        return ['Timestamp', 'Speed', 'Precision', 'Recall', 'Ious', 'Positives', 'False_Positives', 'Negatives', 'Predicted', 'Ground_Truth']
+        return ['Timestamp', 'Speed', 'Precision', 'Recall', 'F1_Score', 'Ious', 'Positives', 'False_Positives', 'Negatives', 'Predicted', 'Ground_Truth']
     
     def get_file_path(self):
         return self.file_path
@@ -39,6 +56,21 @@ class TsvHandle:
     def get_metadata_path(self):
         return self.metadata_path
 
-    # TODO: Append to metadata and data
-    def append(row_dict):
-        print(row_dict.keys())
+    def append(self, row):
+        self.writer.writerow(row)
+
+        interval = datetime.utcnow() - self.__last_update
+
+        if interval.seconds > 10:
+            self.load.update_load()
+            self.load_writer.writerow(self.load.get_data())
+            self.__last_update = datetime.utcnow()
+
+    def __exit__(self, exc_type, exc_value, tb):
+        if exc_type is not None:
+            print(exc_type, exc_value, tb)
+        
+        self.writer = None
+        self.load_writer = None
+        self.file.close()
+        self.load_file.close()
