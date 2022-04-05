@@ -48,7 +48,7 @@ class TsvHandle(object):
         return self
     
     def get_headers(self):
-        return ['Timestamp', 'Speed', 'Precision', 'Recall', 'F1_Score', 'Ious', 'Positives', 'False_Positives', 'Negatives', 'Predicted', 'Ground_Truth']
+        return ['Timestamp', 'Speed', 'Precision', 'Recall', 'F1_Score', 'Ious', 'Positives', 'False_Positives', 'Negatives', 'Num_Of_Faces','Predicted', 'Ground_Truth']
     
     def get_file_path(self):
         return self.file_path
@@ -62,9 +62,12 @@ class TsvHandle(object):
         interval = datetime.utcnow() - self.__last_update
 
         if interval.seconds > 10:
-            self.load.update_load()
-            self.load_writer.writerow(self.load.get_data())
-            self.__last_update = datetime.utcnow()
+            self.append_load
+
+    def append_load(self, interval = None):
+        self.load.update_load(interval)
+        self.load_writer.writerow(self.load.get_data())
+        self.__last_update = datetime.utcnow()
 
     def __exit__(self, exc_type, exc_value, tb):
         if exc_type is not None:

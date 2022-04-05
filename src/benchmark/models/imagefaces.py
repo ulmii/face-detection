@@ -50,7 +50,7 @@ class ImageFaces:
                 if box_id == best_box_id_face:
                     del sorted_faces_boxes[face_id]
                     
-                    if box_iou > 0.25:
+                    if box_iou > 0.5:
                         final_ious.append(box_iou)
                         final_boxes.append(box_id)
                     break

@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+import sys
 import os.path
 import sqlite3
 
@@ -9,7 +10,6 @@ from ..models.imagefaces import ImageFaces
 from ..tools import *
 from ..models import *
 
-import csv
 from datetime import datetime
 
 images_home = '../../AFLW/images'
@@ -85,7 +85,14 @@ def load_aflw(limit = None):
     return image_data_dict.values()
 
 def run_detection(tsv_handle, samples, detector, use_width_height = False, display_data = False):
-    for sample in samples:
+    total_data = len(samples)
+    print("Running detection, total samples: {}".format(total_data))
+    for i, sample in enumerate(samples):
+        sys.stdout.write('\r')
+        j = (i + 1) / total_data
+        sys.stdout.write("[%-20s] %d%% [%d/%d]" % ('='*int(20*j), 100*j, i + 1, total_data))
+        sys.stdout.flush()
+
         image_faces = tf_to_image_faces(sample)
         img = image_faces.img
 
@@ -124,8 +131,8 @@ def run_detection(tsv_handle, samples, detector, use_width_height = False, displ
         predicted = [b.poly.bounds for b in boxes_preds]
         ground_truth = [f.box.poly.bounds for f in image_faces.faces]
 
-        tsv_handle.append([datetime.utcnow().isoformat()] + pred.write() + [predicted] + [ground_truth])
-
+        tsv_handle.append([datetime.utcnow().isoformat()] + pred.write() + [len(image_faces.faces), predicted, ground_truth])
+        
         if display_data:
             for face in image_faces.faces:
                 b = face.box
@@ -134,3 +141,5 @@ def run_detection(tsv_handle, samples, detector, use_width_height = False, displ
             print(pred.stats())
             plt.imshow(img)
             plt.show()
+    
+    tsv_handle.append_load(10)
