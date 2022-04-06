@@ -33,6 +33,9 @@ class Box:
 
     def iou(self, other):
         return self.poly.intersection(other.poly).area / self.poly.union(other.poly).area
+
+    def set_confidence(self, confidence):
+        self.confidence = confidence
     
     def __str__(self):
         return "({}, {}, {}, {})".format(self.x1, self.y1, self.x2, self.y2)

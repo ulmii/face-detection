@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import numpy as np
+
 from .accuracy import Accuracy
 
 class ImageFaces:
@@ -14,7 +15,13 @@ class ImageFaces:
         if face not in self.faces:
             self.faces.append(face)
 
-    def calculate_prediction(self, predicted_boxes: list):
+    def calculate_prediction(self, predicted_boxes: list, tsv_handle):
+        boxes_dict = {}
+
+        for b in predicted_boxes:
+            boxes_dict[b.box_id] = b
+        
+
         faces_boxes = {}
         boxes_faces = {}
         sorted_faces_boxes = {}
@@ -32,7 +39,8 @@ class ImageFaces:
             sorted_faces_boxes[f.face_id] = sorted(faces_boxes[f.face_id], key=lambda item: item[1], reverse=True)
         
         sorted_boxes_faces = {k: sorted(v, key = lambda val: val[1], reverse=True) for k, v in boxes_faces.items()}
-
+        
+        all_ious = []
         final_ious = []
         final_boxes = []
         boxes = []
@@ -49,15 +57,25 @@ class ImageFaces:
                 
                 if box_id == best_box_id_face:
                     del sorted_faces_boxes[face_id]
+                    all_ious.append(box_iou)
                     
                     if box_iou > 0.5:
+                        tsv_handle.append_ap([boxes_dict[box_id].confidence, 'TP'])
                         final_ious.append(box_iou)
                         final_boxes.append(box_id)
+                    else:
+                        tsv_handle.append_ap([boxes_dict[box_id].confidence, 'FP'])
+                    del boxes_dict[box_id] 
+
                     break
 
             boxes.append(box_id)
 
-        return Accuracy(final_ious, len(final_ious), len(np.setdiff1d(boxes, final_boxes)), len(self.faces) - len(final_ious))
+        for box_id, b in boxes_dict.items():
+            all_ious.append(0.0)
+            tsv_handle.append_ap([b.confidence, 'FP'])
+
+        return Accuracy(all_ious, len(final_ious), len(np.setdiff1d(boxes, final_boxes)), len(self.faces) - len(final_ious))
         
     def __str__(self):
         return "({}, {})".format(self.image_id, str(self.faces))

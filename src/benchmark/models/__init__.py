@@ -5,3 +5,4 @@ from .box import Box
 from .prediction import Prediction
 from .accuracy import Accuracy
 from .imagefaces import ImageFaces
+from .detector import Detector

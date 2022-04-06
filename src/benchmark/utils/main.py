@@ -84,20 +84,21 @@ def load_aflw(limit = None):
 
     return image_data_dict.values()
 
-def run_detection(tsv_handle, samples, detector, use_width_height = False, display_data = False):
+def run_detection(tsv_handle, samples, detector: Detector, use_width_height = False, display_data = False):
     total_data = len(samples)
-    print("Running detection, total samples: {}".format(total_data))
+    print("Running detection")
     for i, sample in enumerate(samples):
-        sys.stdout.write('\r')
-        j = (i + 1) / total_data
-        sys.stdout.write("[%-20s] %d%% [%d/%d]" % ('='*int(20*j), 100*j, i + 1, total_data))
-        sys.stdout.flush()
+        if display_data == False:
+            sys.stdout.write('\r')
+            j = (i + 1) / total_data
+            sys.stdout.write("[%-20s] %d%% [%d/%d]" % ('='*int(20*j), 100*j, i + 1, total_data))
+            sys.stdout.flush()
 
         image_faces = tf_to_image_faces(sample)
         img = image_faces.img
 
         t1_start = perf_counter_ns()
-        boxes = detector(img)
+        boxes, confidence = detector.detect(img)
         t1_stop = perf_counter_ns()
 
         boxes_preds = []
@@ -125,7 +126,11 @@ def run_detection(tsv_handle, samples, detector, use_width_height = False, displ
                     if display_data:
                         cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 7)
 
-        acc = image_faces.calculate_prediction(boxes_preds)
+        if confidence is not None and len(confidence) == len(boxes_preds):
+            for i, b in enumerate(boxes_preds):
+                b.set_confidence(confidence[i])
+
+        acc = image_faces.calculate_prediction(boxes_preds, tsv_handle)
         pred = Prediction(t1_stop - t1_start, acc)
 
         predicted = [b.poly.bounds for b in boxes_preds]

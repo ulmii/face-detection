@@ -19,12 +19,17 @@ class TsvHandle(object):
         
         raw_file = "./results/{}-{}".format(name, time)
         self.file_path = "{}.tsv".format(raw_file)
+        self.ap_file_path = "{}-ap.tsv".format(raw_file)
         self.metadata_path = "{}-metadata.tsv".format(raw_file)
         self.env_load_path = "{}-load.tsv".format(raw_file)
         
         with open(self.file_path, 'w', newline='\n') as tsvfile:
             writer = csv.writer(tsvfile, delimiter=str('\t'))
             writer.writerow(self.get_headers())
+
+        with open(self.ap_file_path, 'w', newline='\n') as tsvfile:
+            writer = csv.writer(tsvfile, delimiter=str('\t'))
+            writer.writerow(self.get_ap_headers())
         
         with open(self.metadata_path, 'w', newline='\n') as tsvfile:
             writer = csv.writer(tsvfile, delimiter=str('\t'))
@@ -42,6 +47,9 @@ class TsvHandle(object):
         self.file = open(self.file_path, 'a', newline='\n')
         self.writer = csv.writer(self.file, delimiter=str('\t'))
 
+        self.ap_file = open(self.ap_file_path, 'a', newline='\n')
+        self.ap_writer = csv.writer(self.ap_file, delimiter=str('\t'))        
+
         self.load_file = open(self.env_load_path, 'a', newline='\n')
         self.load_writer = csv.writer(self.load_file, delimiter=str('\t'))
 
@@ -50,11 +58,17 @@ class TsvHandle(object):
     def get_headers(self):
         return ['Timestamp', 'Speed', 'Precision', 'Recall', 'F1_Score', 'Ious', 'Positives', 'False_Positives', 'Negatives', 'Num_Of_Faces','Predicted', 'Ground_Truth']
     
+    def get_ap_headers(self):
+        return ['Confidence', 'TP_FP']
+    
     def get_file_path(self):
         return self.file_path
     
     def get_metadata_path(self):
         return self.metadata_path
+
+    def append_ap(self, row):
+        self.ap_writer.writerow(row)
 
     def append(self, row):
         self.writer.writerow(row)
@@ -62,7 +76,7 @@ class TsvHandle(object):
         interval = datetime.utcnow() - self.__last_update
 
         if interval.seconds > 10:
-            self.append_load
+            self.append_load()
 
     def append_load(self, interval = None):
         self.load.update_load(interval)
@@ -74,6 +88,8 @@ class TsvHandle(object):
             print(exc_type, exc_value, tb)
         
         self.writer = None
+        self.ap_writer = None
         self.load_writer = None
         self.file.close()
+        self.ap_file.close()
         self.load_file.close()
