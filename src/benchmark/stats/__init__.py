@@ -1,3 +1,3 @@
 #! /usr/bin/env python3
 
-from .main import predictions_summary
+from .main import calc_precision_recall, calc_ap
