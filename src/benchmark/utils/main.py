@@ -84,7 +84,7 @@ def load_aflw(limit = None):
 
     return image_data_dict.values()
 
-def run_detection(tsv_handle, samples, detector: Detector, use_width_height = False, display_data = False):
+def run_detection(tsv_handle, samples, detector: Detector, cv2_filter = None, use_width_height = False, display_data = False, display_filter = None):
     total_data = len(samples)
     print("Running detection")
     for i, sample in enumerate(samples):
@@ -96,10 +96,16 @@ def run_detection(tsv_handle, samples, detector: Detector, use_width_height = Fa
 
         image_faces = tf_to_image_faces(sample)
         img = image_faces.img
+        
+        if cv2_filter is not None:
+            img = cv2.cvtColor(img, cv2_filter)
 
         t1_start = perf_counter_ns()
         boxes, confidence = detector.detect(img)
         t1_stop = perf_counter_ns()
+        
+        if display_filter is not None:
+            img = cv2.cvtColor(img, display_filter)
 
         boxes_preds = []
         if boxes is not None:
@@ -144,6 +150,7 @@ def run_detection(tsv_handle, samples, detector: Detector, use_width_height = Fa
                 cv2.rectangle(img, (b.x1, b.y1), (b.x2, b.y2), (0, 255, 0), 2)
 
             print(pred.stats())
+
             plt.imshow(img)
             plt.show()
     
