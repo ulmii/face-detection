@@ -73,6 +73,7 @@ def post_process(frame, outs, conf_threshold, nms_threshold):
     confidences = []
     boxes = []
     final_boxes = []
+    final_confidences = []
     for out in outs:
         for detection in out:
             scores = detection[5:]
@@ -100,9 +101,10 @@ def post_process(frame, outs, conf_threshold, nms_threshold):
         width = box[2]
         height = box[3]
         final_boxes.append(box)
+        final_confidences.append(confidences[i])
         left, top, right, bottom = refined_box(left, top, width, height)
 
-    return final_boxes
+    return final_boxes, final_confidences
 
 
 class FPS:
