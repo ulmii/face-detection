@@ -26,8 +26,8 @@ def calc_precision_recall(df: pd.DataFrame, ground_truth_count):
 
     for index, row in work_df.iterrows():
         predicted_25 = 1.0 if work_df.at[index, 'TP_FP@25'] else 0.0
-        predicted_50 = 1.0 if work_df.at[index, 'TP_FP@25'] else 0.0
-        predicted_75 = 1.0 if work_df.at[index, 'TP_FP@25'] else 0.0
+        predicted_50 = 1.0 if work_df.at[index, 'TP_FP@50'] else 0.0
+        predicted_75 = 1.0 if work_df.at[index, 'TP_FP@75'] else 0.0
 
         accum_precision_25 += predicted_25
         accum_precision_50 += predicted_50
