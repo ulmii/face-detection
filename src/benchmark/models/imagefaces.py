@@ -59,7 +59,7 @@ class ImageFaces:
                     del sorted_faces_boxes[face_id]
                     all_ious.append(box_iou)
                     
-                    if box_iou > 0.5:
+                    if box_iou > 0.25:
                         tsv_handle.append_ap([boxes_dict[box_id].confidence, 'TP'])
                         final_ious.append(box_iou)
                         final_boxes.append(box_id)
