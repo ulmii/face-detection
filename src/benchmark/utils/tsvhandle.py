@@ -59,7 +59,7 @@ class TsvHandle(object):
         return ['Timestamp', 'Speed', 'Precision', 'Recall', 'F1_Score', 'Ious', 'Positives', 'False_Positives', 'Negatives', 'Num_Of_Faces','Predicted', 'Ground_Truth']
     
     def get_ap_headers(self):
-        return ['Confidence', 'TP_FP']
+        return ['Confidence', 'TP_FP@25', 'TP_FP@50', 'TP_FP@75']
     
     def get_file_path(self):
         return self.file_path

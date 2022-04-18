@@ -59,21 +59,20 @@ class ImageFaces:
                     del sorted_faces_boxes[face_id]
                     all_ious.append(box_iou)
                     
+                    tsv_handle.append_ap([boxes_dict[box_id].confidence, box_iou > 0.25, box_iou > 0.50, box_iou > 0.75])
+
                     if box_iou > 0.25:
-                        tsv_handle.append_ap([boxes_dict[box_id].confidence, 'TP'])
                         final_ious.append(box_iou)
                         final_boxes.append(box_id)
-                    else:
-                        tsv_handle.append_ap([boxes_dict[box_id].confidence, 'FP'])
+                    
                     del boxes_dict[box_id] 
-
                     break
 
             boxes.append(box_id)
 
         for box_id, b in boxes_dict.items():
             all_ious.append(0.0)
-            tsv_handle.append_ap([b.confidence, 'FP'])
+            tsv_handle.append_ap([b.confidence, False, False, False])
 
         return Accuracy(all_ious, len(final_ious), len(np.setdiff1d(boxes, final_boxes)), len(self.faces) - len(final_ious))
         
