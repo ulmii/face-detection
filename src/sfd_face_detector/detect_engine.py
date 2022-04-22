@@ -44,11 +44,12 @@ class FaceDetectionEngine:
         keep = nms(bboxlist, 0.3)
         bboxlist = bboxlist[keep, :]
         bboxlist = [x[:-1] for x in bboxlist if x[-1] > 0.5]
+        scores = [x[-1] for x in bboxlist if x[-1] > 0.5]
 
         if dilate_bbox:
             return [self.dilate_bbox(box, dilate_pixels) for box in bboxlist]
 
-        return bboxlist
+        return bboxlist, scores
 
     @staticmethod
     def crop(img, bbox):

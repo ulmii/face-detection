@@ -1,0 +1,7 @@
+.ipynb_checkpoints/
+__pycache__/
+*.pth.tar
+config.py
+.vscode
+*.pyc
+nohup.out
