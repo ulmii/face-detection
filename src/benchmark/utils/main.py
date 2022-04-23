@@ -2,6 +2,8 @@
 
 import sys
 
+from regex import E
+
 from ..models.face import Face
 from ..models.box import Box
 from ..models.imagefaces import ImageFaces
@@ -42,7 +44,7 @@ def tf_to_image_faces(tf_obj):
     
     return image_faces
 
-def run_detection(tsv_handle, samples, detector: Detector, cv2_filter = None, use_width_height = False, display_data = False, display_filter = None):
+def run_detection(tsv_handle, samples, detector: Detector, cv2_filter = None, use_width_height = False, display_data = False, display_filter = None, filter_area = None):
     total_data = len(samples)
     print("Running detection")
     for i, sample in enumerate(samples):
@@ -94,7 +96,7 @@ def run_detection(tsv_handle, samples, detector: Detector, cv2_filter = None, us
             for i, b in enumerate(boxes_preds):
                 b.set_confidence(confidence[i])
 
-        acc = image_faces.calculate_prediction(boxes_preds, tsv_handle)
+        acc = image_faces.calculate_prediction(boxes_preds, tsv_handle, filter_area)
         pred = Prediction(t1_stop - t1_start, acc)
 
         predicted = [b.poly.bounds for b in boxes_preds]
@@ -105,7 +107,10 @@ def run_detection(tsv_handle, samples, detector: Detector, cv2_filter = None, us
         if display_data:
             for face in image_faces.faces:
                 b = face.box
-                cv2.rectangle(img, (b.x1, b.y1), (b.x2, b.y2), (0, 255, 0), 2)
+                if filter_area is None:
+                    cv2.rectangle(img, (b.x1, b.y1), (b.x2, b.y2), (0, 255, 0), 2)
+                elif b.poly.area > filter_area:
+                    cv2.rectangle(img, (b.x1, b.y1), (b.x2, b.y2), (0, 255, 0), 2)
 
             print(pred.stats())
 
