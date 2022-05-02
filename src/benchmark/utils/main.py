@@ -2,8 +2,6 @@
 
 import sys
 
-from regex import E
-
 from ..models.face import Face
 from ..models.box import Box
 from ..models.imagefaces import ImageFaces
