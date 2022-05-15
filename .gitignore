@@ -1,5 +1,6 @@
 # Datasets
 wider*/
+chokepoint*/
 !datasets/*
 *.sqlite
 *.bundle.*
