@@ -1,6 +1,6 @@
 # Datasets
 wider*/
-chokepoint*/
+chokepoint-data/
 !datasets/*
 *.sqlite
 *.bundle.*
@@ -9,6 +9,7 @@ node_modules/
 *.egg-info/
 .ipynb_checkpoints
 *.tsbuildinfo
+*.jpg
 
 .DS_Store
 
