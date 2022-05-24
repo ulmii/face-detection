@@ -4,13 +4,13 @@ class Prediction:
         self.accuracy = accuracy
     
     def stats(self):
-        return "Speed: {}ms\n".format(self.speed / 1e+6) + self.accuracy.stats()
+        return "Speed: {0:.2f}ms\n".format(self.speed / 1e+6) + self.accuracy.stats()
     
     def write(self):
         return [self.speed] + self.accuracy.write()
     
     def __str__(self):
-        return "(Speed: {}ms, Accuracy: {})".format(self.speed / 1e+6, str(self.accuracy))
+        return "(Speed: {0:.2f}ms, Accuracy: {0:.2f})".format(self.speed / 1e+6, str(self.accuracy))
     
     def __repr__(self):
-        return "Prediction({}ms, {})".format(self.speed / 1e+6, repr(self.accuracy))
+        return "Prediction({0:.2f}ms, {0:.2f})".format(self.speed / 1e+6, repr(self.accuracy))

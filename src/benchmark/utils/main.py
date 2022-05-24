@@ -9,6 +9,7 @@ from ..tools import *
 from ..models import *
 
 from datetime import datetime
+from IPython.display import HTML
 
 face_id = 0
 box_id = 0
@@ -116,3 +117,95 @@ def run_detection(tsv_handle, samples, detector: Detector, cv2_filter = None, us
             plt.show()
     
     tsv_handle.append_load(10)
+
+def run_detection_video(samples, detector: Detector, cv2_filter = None, use_width_height = False, display_results = False):
+    if display_results:
+        import matplotlib.pyplot as plt
+        import matplotlib.animation as animation
+
+    for i, sample in enumerate(samples):
+        sequence = sample['sequences']
+
+        filenames = sequence['image/filename']
+        images = sequence['image']
+        faces = sequence['face']
+
+        fig = plt.figure()
+        frames = []
+        intersections = []
+        unions = []
+        confidences = []
+        inference_times = []
+        for i in range(len(filenames)):
+            tf_obj = {
+                'image': images[i],
+                'faces': {'bbox': [faces[i]]},
+                'image/filename': filenames[i],
+            }
+
+            image_faces = tf_to_image_faces(tf_obj)
+            img = image_faces.img
+            
+            if cv2_filter is not None:
+                img = cv2.cvtColor(img, cv2_filter)
+
+            t1_start = perf_counter_ns()
+            boxes, confidence = detector.detect(img)
+            t1_stop = perf_counter_ns()
+            
+            inference_times.append(t1_stop - t1_start)
+            boxes_preds = []
+            if boxes is not None:
+                for box in boxes:
+                    box = [int(b) for b in box]
+                    if use_width_height:
+                        x1 = box[0]
+                        y1 = box[1]
+                        w = box[2]
+                        h = box[3]
+
+                        boxes_preds.append(Box(box_id = get_box_id(), x1 = x1, y1 = y1, w = w, h = h))
+
+                        if display_results:
+                            cv2.rectangle(img, (x1, y1), (x1 + w, y1 + h), (255, 0, 0), 7)
+                    else:
+                        x1 = box[0]
+                        y1 = box[1]
+                        x2 = box[2]
+                        y2 = box[3]
+
+                        boxes_preds.append(Box(box_id = get_box_id(), x1 = x1, y1 = y1, x2 = x2, y2 = y2))
+
+                        if display_results:
+                            cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 7)
+
+            if confidence is not None and len(confidence) == len(boxes_preds):
+                for i, b in enumerate(boxes_preds):
+                    b.set_confidence(confidence[i])
+
+            boxes_preds_len = len(boxes_preds)
+            if boxes_preds_len > 0 and len(image_faces.faces):
+                sorted_boxes_preds = sorted(boxes_preds, key=lambda item: item.confidence, reverse=True)
+                pred_box = sorted_boxes_preds[0]
+                gt_box = image_faces.faces[0].box
+                intersections.append(pred_box.intersection(gt_box))
+                unions.append(pred_box.union(gt_box))
+                confidences.append(pred_box.confidence)
+
+            if display_results:
+                for face in image_faces.faces:
+                    b = face.box
+                    cv2.rectangle(image_faces.img, (b.x1, b.y1), (b.x2, b.y2), (0, 255, 0), 2)
+
+                im = plt.imshow(image_faces.img, animated=True)
+                frames.append([im])
+        
+        if display_results: 
+            ani = animation.ArtistAnimation(fig, frames, interval=30, blit=True, repeat_delay=0)
+            html = HTML(ani.to_jshtml())
+            display(html)
+            print("Video STT-AP: {0:.2f}".format(np.sum(intersections) / np.sum(unions)))
+            print("Mean confidence of all frames: {:.2f}".format(np.mean(confidences)))
+            print("Mean inference time of all frames: {:.2f}ms".format(np.mean(inference_times) / 1e+6))
+        
+        plt.close()

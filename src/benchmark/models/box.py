@@ -32,7 +32,13 @@ class Box:
             raise ValueError("Either [x2, y2] or [w, h] must be specified")
 
     def iou(self, other):
-        return self.poly.intersection(other.poly).area / self.poly.union(other.poly).area
+        self.intersection(other) / self.union(other)
+
+    def intersection(self, other):
+        return self.poly.intersection(other.poly).area
+
+    def union(self, other):
+        return self.poly.union(other.poly).area
 
     def set_confidence(self, confidence):
         self.confidence = confidence
