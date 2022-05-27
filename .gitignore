@@ -4,6 +4,7 @@ chokepoint-data/
 !datasets/*
 *.sqlite
 *.bundle.*
+animations/
 lib/
 node_modules/
 *.egg-info/

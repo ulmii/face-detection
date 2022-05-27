@@ -118,6 +118,8 @@ def run_detection(tsv_handle, samples, detector: Detector, cv2_filter = None, us
     
     tsv_handle.append_load(10)
 
+    return tsv_handle.get_file_path(), tsv_handle.get_ap_file_path(), tsv_handle.get_load_file_path(), tsv_handle.get_metadata_path()
+
 def run_detection_video(samples, detector: Detector, cv2_filter = None, use_width_height = False, display_results = False, save_anim = None):
     import matplotlib.pyplot as plt
     import matplotlib.animation as animation
@@ -125,8 +127,8 @@ def run_detection_video(samples, detector: Detector, cv2_filter = None, use_widt
 
     if save_anim is not None:
         import os
-        if not os.path.exists("./animations/" + save_anim):
-            os.makedirs("./animations" + save_anim)
+        if not os.path.exists("./animations/{}/".format(save_anim)):
+            os.makedirs("./animations/{}/".format(save_anim))
 
     stt_aps = []
     mean_confidences = []

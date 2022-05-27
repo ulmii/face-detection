@@ -63,6 +63,12 @@ class TsvHandle(object):
     
     def get_file_path(self):
         return self.file_path
+
+    def get_ap_file_path(self):
+        return self.ap_file_path
+    
+    def get_load_file_path(self):
+        return self.env_load_path
     
     def get_metadata_path(self):
         return self.metadata_path

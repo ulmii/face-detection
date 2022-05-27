@@ -32,7 +32,7 @@ class Box:
             raise ValueError("Either [x2, y2] or [w, h] must be specified")
 
     def iou(self, other):
-        self.intersection(other) / self.union(other)
+        return self.intersection(other) / self.union(other)
 
     def intersection(self, other):
         return self.poly.intersection(other.poly).area
