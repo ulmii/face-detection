@@ -120,15 +120,15 @@ def run_detection(tsv_handle, samples, detector: Detector, cv2_filter = None, us
 
     return tsv_handle.get_file_path(), tsv_handle.get_ap_file_path(), tsv_handle.get_load_file_path(), tsv_handle.get_metadata_path()
 
-def run_detection_video(samples, detector: Detector, cv2_filter = None, use_width_height = False, display_results = False, save_anim = None):
+def run_detection_video(samples, detector: Detector, cv2_filter = None, use_width_height = False, display_results = False, save_results = None):
     import matplotlib.pyplot as plt
     import matplotlib.animation as animation
     import os 
 
-    if save_anim is not None:
+    if save_results is not None:
         import os
-        if not os.path.exists("./animations/{}/".format(save_anim)):
-            os.makedirs("./animations/{}/".format(save_anim))
+        if not os.path.exists("./animations/{}/".format(save_results)):
+            os.makedirs("./animations/{}/".format(save_results))
 
     stt_aps = []
     mean_confidences = []
@@ -147,6 +147,8 @@ def run_detection_video(samples, detector: Detector, cv2_filter = None, use_widt
         unions = []
         confidences = []
         inference_times = []
+        stt_canvas = np.zeros((600, 800, 3), np.uint8)
+        stt_gt_canvas = np.zeros((600, 800, 3), np.uint8)
         for frame_index in range(len(filenames)):
             tf_obj = {
                 'image': images[frame_index],
@@ -177,8 +179,9 @@ def run_detection_video(samples, detector: Detector, cv2_filter = None, use_widt
 
                         boxes_preds.append(Box(box_id = get_box_id(), x1 = x1, y1 = y1, w = w, h = h))
 
-                        if display_results or save_anim is not None:
+                        if display_results or save_results is not None:
                             cv2.rectangle(img, (x1, y1), (x1 + w, y1 + h), (255, 0, 0), 4)
+                            cv2.rectangle(stt_canvas, (x1, y1), (x1 + w, y1 + h), (255, 0, 0), 2)
                     else:
                         x1 = box[0]
                         y1 = box[1]
@@ -187,8 +190,9 @@ def run_detection_video(samples, detector: Detector, cv2_filter = None, use_widt
 
                         boxes_preds.append(Box(box_id = get_box_id(), x1 = x1, y1 = y1, x2 = x2, y2 = y2))
 
-                        if display_results or save_anim is not None:
+                        if display_results or save_results is not None:
                             cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 4)
+                            cv2.rectangle(stt_canvas, (x1, y1), (x2, y2), (255, 0, 0), 2)
 
             if confidence is not None and len(confidence) == len(boxes_preds):
                 for i, b in enumerate(boxes_preds):
@@ -203,10 +207,11 @@ def run_detection_video(samples, detector: Detector, cv2_filter = None, use_widt
                 unions.append(pred_box.union(gt_box))
                 confidences.append(pred_box.confidence)
 
-            if display_results or save_anim:
+            if display_results or save_results:
                 for face in image_faces.faces:
                     b = face.box
                     cv2.rectangle(image_faces.img, (b.x1, b.y1), (b.x2, b.y2), (0, 255, 0), 2)
+                    cv2.rectangle(stt_gt_canvas, (b.x1, b.y1), (b.x2, b.y2), (0, 255, 0), 2)
 
                 im = plt.imshow(image_faces.img, animated=True)
                 frames.append([im])
@@ -215,19 +220,32 @@ def run_detection_video(samples, detector: Detector, cv2_filter = None, use_widt
         mean_confidence = np.mean(confidences)
         mean_inference_time = np.mean(inference_times)
 
-        if save_anim is not None: 
+        if save_results is not None: 
             fig.set_dpi(100)
             anim = animation.ArtistAnimation(fig, frames, interval=30, blit=True, repeat_delay=0)
             writervideo = animation.FFMpegWriter(fps=30)
-            anim.save("./animations/{0}/{0}-{1}.mp4".format(save_anim, sample_index), writer=writervideo)
+            anim.save("./animations/{0}/{0}-{1}.mp4".format(save_results, sample_index), writer=writervideo)
+            plt.close()
+            trace_fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(15, 10), dpi=100)
+            axes[0].imshow(stt_gt_canvas)
+            axes[0].set_title("Ground truth boxes trace")
+            axes[1].imshow(stt_canvas)
+            axes[1].set_title("Predicted boxes trace")
+            trace_fig.savefig("./animations/{0}/{0}-{1}.png".format(save_results, sample_index))
             plt.close()
 
         if display_results:
-            fig.set_dpi(20)
+            fig.set_dpi(40)
             anim = animation.ArtistAnimation(fig, frames, interval=30, blit=True, repeat_delay=0)
             html = HTML(anim.to_jshtml())
             display(html)
             plt.close()
+            trace_fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(15, 10), dpi=100)
+            axes[0].imshow(stt_gt_canvas)
+            axes[0].set_title("Ground truth boxes trace")
+            axes[1].imshow(stt_canvas)
+            axes[1].set_title("Predicted boxes trace")
+            trace_fig.show()
             print("Video STT-AP: {0:.2f}".format(stt_ap))
             print("Mean confidence of all frames: {:.2f}".format(mean_confidence))
             print("Mean inference time of all frames: {:.2f}ms".format(mean_inference_time / 1e+6))
