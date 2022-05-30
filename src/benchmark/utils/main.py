@@ -130,6 +130,7 @@ def run_detection_video(samples, detector: Detector, cv2_filter = None, use_widt
         if not os.path.exists("./animations/{}/".format(save_results)):
             os.makedirs("./animations/{}/".format(save_results))
 
+    total_data = len(samples)
     stt_aps = []
     mean_confidences = []
     mean_inference_times = []
@@ -149,7 +150,13 @@ def run_detection_video(samples, detector: Detector, cv2_filter = None, use_widt
         inference_times = []
         stt_canvas = np.zeros((600, 800, 3), np.uint8)
         stt_gt_canvas = np.zeros((600, 800, 3), np.uint8)
-        for frame_index in range(len(filenames)):
+        total_frames = len(filenames)
+        for frame_index in range(total_frames):
+            sys.stdout.write('\r')
+            k = (frame_index + 1) / total_frames
+            sys.stdout.write("Frames: [%-20s] %d%% [%d/%d], Videos: [%d/%d]" % ('='*int(20*k), 100*k, frame_index + 1, total_frames, sample_index + 1, total_data))
+            sys.stdout.flush()
+            
             tf_obj = {
                 'image': images[frame_index],
                 'faces': {'bbox': [faces[frame_index]]},
@@ -221,18 +228,23 @@ def run_detection_video(samples, detector: Detector, cv2_filter = None, use_widt
         mean_inference_time = np.mean(inference_times)
 
         if save_results is not None: 
+            path_to_save = "./animations/{0}/{0}-{1}".format(save_results, sample_index)
             fig.set_dpi(100)
             anim = animation.ArtistAnimation(fig, frames, interval=30, blit=True, repeat_delay=0)
             writervideo = animation.FFMpegWriter(fps=30)
-            anim.save("./animations/{0}/{0}-{1}.mp4".format(save_results, sample_index), writer=writervideo)
+            anim.save(path_to_save + ".mp4", writer=writervideo)
             plt.close()
-            trace_fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(15, 10), dpi=100)
+            trace_fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(15, 5), dpi=100)
             axes[0].imshow(stt_gt_canvas)
             axes[0].set_title("Ground truth boxes trace")
             axes[1].imshow(stt_canvas)
             axes[1].set_title("Predicted boxes trace")
-            trace_fig.savefig("./animations/{0}/{0}-{1}.png".format(save_results, sample_index))
+            trace_fig.savefig(path_to_save + ".png")
             plt.close()
+            with open(path_to_save + ".txt", 'w') as f:
+                f.write("Video STT-AP: {}\n".format(stt_ap))
+                f.write("Mean confidence of all frames: {}\n".format(mean_confidence))
+                f.write("Mean inference time of all frames: {}".format(mean_inference_time))
 
         if display_results:
             fig.set_dpi(40)
@@ -246,6 +258,7 @@ def run_detection_video(samples, detector: Detector, cv2_filter = None, use_widt
             axes[1].imshow(stt_canvas)
             axes[1].set_title("Predicted boxes trace")
             trace_fig.show()
+            plt.show()
             print("Video STT-AP: {0:.2f}".format(stt_ap))
             print("Mean confidence of all frames: {:.2f}".format(mean_confidence))
             print("Mean inference time of all frames: {:.2f}ms".format(mean_inference_time / 1e+6))

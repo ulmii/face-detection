@@ -1,0 +1,3 @@
+Video STT-AP: 0.7011738313951269
+Mean confidence of all frames: 0.9999818801879883
+Mean inference time of all frames: 88688025.58139534
