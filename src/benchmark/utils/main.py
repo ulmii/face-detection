@@ -126,14 +126,14 @@ def run_detection_video(samples, detector: Detector, results_folder, cv2_filter 
     import os 
     import csv
 
-    if not os.path.exists("./animations/{}/".format(results_folder)):
-        os.makedirs("./animations/{}/".format(results_folder))
+    if not os.path.exists("./video_results/{}/".format(results_folder)):
+        os.makedirs("./video_results/{}/".format(results_folder))
 
     total_data = len(samples)
     stt_aps = []
     mean_confidences = []
     mean_inference_times = []
-    with open("./animations/{0}/{0}.tsv".format(results_folder), 'w', newline='\n') as tsvfile:
+    with open("./video_results/{0}/{0}.tsv".format(results_folder), 'w', newline='\n') as tsvfile:
         writer = csv.writer(tsvfile, delimiter=str('\t'))
         writer.writerow(['index', 'STT_AP', 'Confidence', 'Speed'])
         for sample_index, sample in enumerate(samples):
@@ -230,7 +230,7 @@ def run_detection_video(samples, detector: Detector, results_folder, cv2_filter 
             mean_inference_time = np.mean(inference_times)
 
             if save_videos: 
-                path_to_save = "./animations/{0}/{0}-{1}".format(results_folder, sample_index)
+                path_to_save = "./video_results/{0}/{0}-{1}".format(results_folder, sample_index)
                 fig.set_dpi(100)
                 anim = animation.ArtistAnimation(fig, frames, interval=30, blit=True, repeat_delay=0)
                 writervideo = animation.FFMpegWriter(fps=30)

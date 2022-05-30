@@ -6,8 +6,8 @@ chokepoint-data/
 *.bundle.*
 
 # animations
-**/animations/*
-!**/animations/example/
+**/video_results/*
+!**/video_results/example/
 
 lib/
 node_modules/
