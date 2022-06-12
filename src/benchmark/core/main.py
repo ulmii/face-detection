@@ -45,11 +45,11 @@ def tf_to_image_faces(tf_obj):
     
     return image_faces
 
-def run_detection(tsv_handle, samples, detector: Detector, cv2_filter = None, use_width_height = False, display_data = False, display_filter = None, filter_area = None):
+def run_detection(tsv_handle, samples, detector: Detector, cv2_filter = None, use_width_height = False, display_results = False, filter_area = None):
     total_data = len(samples)
     print("Running detection")
     for i, sample in enumerate(samples):
-        if display_data == False:
+        if display_results == False:
             sys.stdout.write('\r')
             j = (i + 1) / total_data
             sys.stdout.write("[%-20s] %d%% [%d/%d]" % ('='*int(20*j), 100*j, i + 1, total_data))
@@ -58,15 +58,16 @@ def run_detection(tsv_handle, samples, detector: Detector, cv2_filter = None, us
         image_faces = tf_to_image_faces(sample)
         img = image_faces.img
         
+        boxes, confidence, t1_start, t1_stop = None, None, None, None
         if cv2_filter is not None:
-            img = cv2.cvtColor(img, cv2_filter)
-
-        t1_start = perf_counter_ns()
-        boxes, confidence = detector.detect(img)
-        t1_stop = perf_counter_ns()
-        
-        if display_filter is not None:
-            img = cv2.cvtColor(img, display_filter)
+            img_filter = cv2.cvtColor(img, cv2_filter)
+            t1_start = perf_counter_ns()
+            boxes, confidence = detector.detect(img_filter)
+            t1_stop = perf_counter_ns()
+        else:
+            t1_start = perf_counter_ns()
+            boxes, confidence = detector.detect(img)
+            t1_stop = perf_counter_ns()
 
         boxes_preds = []
         if boxes is not None:
@@ -80,8 +81,8 @@ def run_detection(tsv_handle, samples, detector: Detector, cv2_filter = None, us
                     
                     boxes_preds.append(Box(box_id = get_box_id(), x1 = x1, y1 = y1, w = w, h = h))
 
-                    if display_data:
-                        cv2.rectangle(img, (x1, y1), (x1 + w, y1 + h), (255, 0, 0), 7)
+                    if display_results:
+                        cv2.rectangle(img, (x1, y1), (x1 + w, y1 + h), (255, 0, 0), 4)
                 else:
                     x1 = box[0]
                     y1 = box[1]
@@ -90,8 +91,8 @@ def run_detection(tsv_handle, samples, detector: Detector, cv2_filter = None, us
                     
                     boxes_preds.append(Box(box_id = get_box_id(), x1 = x1, y1 = y1, x2 = x2, y2 = y2))
 
-                    if display_data:
-                        cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 7)
+                    if display_results:
+                        cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 4)
 
         if confidence is not None and len(confidence) == len(boxes_preds):
             for i, b in enumerate(boxes_preds):
@@ -105,7 +106,7 @@ def run_detection(tsv_handle, samples, detector: Detector, cv2_filter = None, us
 
         tsv_handle.append([datetime.utcnow().isoformat()] + pred.write() + [len(image_faces.faces), predicted, ground_truth])
         
-        if display_data:
+        if display_results:
             for face in image_faces.faces:
                 b = face.box
                 if filter_area is None:
@@ -170,12 +171,16 @@ def run_detection_video(samples, detector: Detector, results_folder, cv2_filter 
                 image_faces = tf_to_image_faces(tf_obj)
                 img = image_faces.img
                 
+                boxes, confidence, t1_start, t1_stop = None, None, None, None
                 if cv2_filter is not None:
-                    img = cv2.cvtColor(img, cv2_filter)
-
-                t1_start = perf_counter_ns()
-                boxes, confidence = detector.detect(img)
-                t1_stop = perf_counter_ns()
+                    img_filter = cv2.cvtColor(img, cv2_filter)
+                    t1_start = perf_counter_ns()
+                    boxes, confidence = detector.detect(img_filter)
+                    t1_stop = perf_counter_ns()
+                else:
+                    t1_start = perf_counter_ns()
+                    boxes, confidence = detector.detect(img)
+                    t1_stop = perf_counter_ns()
                 
                 inference_times.append(t1_stop - t1_start)
                 boxes_preds = []
