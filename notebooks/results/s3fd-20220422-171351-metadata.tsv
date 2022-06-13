@@ -1,2 +1,0 @@
-Python	CPU	GPUs
-3.8.13.final.0 (64 bit)	AMD Ryzen 7 2700X Eight-Core Processor	['device: 0, name: NVIDIA GeForce GTX 1080 Ti, pci bus id: 0000:08:00.0, compute capability: 6.1']

@@ -136,9 +136,10 @@ def run_detection_video(samples, detector: Detector, results_folder, cv2_filter 
     stt_aps = []
     mean_confidences = []
     mean_inference_times = []
+    detection_percentages = []
     with open("./video_results/{0}/{0}.tsv".format(results_folder), 'w', newline='\n') as tsvfile:
         writer = csv.writer(tsvfile, delimiter=str('\t'))
-        writer.writerow(['index', 'STT_AP', 'Confidence', 'Speed'])
+        writer.writerow(['index', 'STT_AP', 'Detection_Percentage', 'Confidence', 'Speed'])
         for sample_index, sample in enumerate(samples):
             sequence = sample['sequences']
 
@@ -156,6 +157,8 @@ def run_detection_video(samples, detector: Detector, results_folder, cv2_filter 
             stt_canvas = np.zeros((600, 800, 3), np.uint8)
             stt_gt_canvas = np.zeros((600, 800, 3), np.uint8)
             total_frames = len(filenames)
+            faces_counter = 0
+            detected_faces_counter = 0
             for frame_index in range(total_frames):
                 sys.stdout.write('\r')
                 k = (frame_index + 1) / total_frames
@@ -214,6 +217,9 @@ def run_detection_video(samples, detector: Detector, results_folder, cv2_filter 
                     for i, b in enumerate(boxes_preds):
                         b.set_confidence(confidence[i])
 
+                if len(image_faces.faces) > 0:
+                    faces_counter += 1
+
                 boxes_preds_len = len(boxes_preds)
                 if boxes_preds_len > 0 and len(image_faces.faces) > 0:
                     sorted_boxes_preds = sorted(boxes_preds, key=lambda item: item.confidence, reverse=True)
@@ -222,6 +228,9 @@ def run_detection_video(samples, detector: Detector, results_folder, cv2_filter 
                     intersections.append(pred_box.intersection(gt_box))
                     unions.append(pred_box.union(gt_box))
                     confidences.append(pred_box.confidence)
+
+                    if pred_box.iou(gt_box) > 0.5:
+                        detected_faces_counter += 1
 
                 if display_results or save_videos:
                     for face in image_faces.faces:
@@ -235,6 +244,7 @@ def run_detection_video(samples, detector: Detector, results_folder, cv2_filter 
             stt_ap = np.sum(intersections) / np.sum(unions)
             mean_confidence = np.mean(confidences)
             mean_inference_time = np.mean(inference_times)
+            detection_percentage = (detected_faces_counter / faces_counter) * 100
 
             if save_videos: 
                 path_to_save = "./video_results/{0}/{0}-{1}".format(results_folder, sample_index)
@@ -265,13 +275,15 @@ def run_detection_video(samples, detector: Detector, results_folder, cv2_filter 
                 trace_fig.show()
                 plt.show()
                 print("Video STT-AP: {0:.2f}".format(stt_ap))
-                print("Mean confidence of all frames: {:.2f}".format(mean_confidence))
-                print("Mean inference time of all frames: {:.2f}ms".format(mean_inference_time / 1e+6))
+                print("Face detection percentage: {:.2f}".format(detection_percentage))
+                print("Mean confidence for all frames: {:.2f}".format(mean_confidence))
+                print("Mean inference time for all frames: {:.2f}ms".format(mean_inference_time / 1e+6))
 
-            writer.writerow([sample_index, stt_ap, mean_confidence, mean_inference_time])
+            writer.writerow([sample_index, stt_ap, detection_percentage, mean_confidence, mean_inference_time])
 
             stt_aps.append(stt_ap)
+            detection_percentages.append(detection_percentage)
             mean_confidences.append(mean_confidence)
             mean_inference_times.append(mean_inference_time)
 
-    return stt_aps, mean_confidences, mean_inference_times
+    return stt_aps, detection_percentages, mean_confidences, mean_inference_times
